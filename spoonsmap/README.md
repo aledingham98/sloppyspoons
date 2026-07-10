@@ -191,7 +191,38 @@ unit than small high-markup spirit measures, not a parsing error.
   payload for a browser to parse, but works fine in practice, including
   opened directly as a local file.
 
-## Re-running
+## Deployment (GitHub Pages)
+
+The site is live at **https://aledingham98.github.io/sloppyspoons/**
+
+It's deployed via two GitHub Actions workflows:
+
+| Workflow | Trigger | What it does | Duration |
+|----------|---------|-------------|----------|
+| `scrape.yml` | Weekly (Sun 03:00 UTC) + manual | Full data scrape → uploads `map_data.js` as a dated release asset | ~2 hours |
+| `deploy.yml` | Push to `main` + after scrape + manual | Downloads latest release asset → deploys to Pages | ~30 seconds |
+
+### Making UI changes
+
+Edit `template.html`, commit, push to `main`. The site redeploys in ~30 seconds
+using the most recent data from the latest release. No scraping needed.
+
+### Refreshing price data
+
+Either wait for the weekly Sunday scrape, or manually trigger it:
+- Go to **Actions → Scrape Fresh Data → Run workflow**
+- Or: `gh workflow run scrape.yml`
+
+When the scrape finishes, it creates a new dated release (e.g. `data-2026-07-13`)
+and automatically triggers a deploy with the fresh data.
+
+### Why two workflows?
+
+So that UI changes deploy instantly without waiting ~2 hours for a scrape.
+The data lives in GitHub Release assets (not committed to git) to avoid
+bloating the repository with weekly 31 MB commits.
+
+## Re-running locally
 
 ```
 cd scripts
@@ -206,3 +237,15 @@ if you want a clean re-run rather than duplicate rows.
 
 If you only edited `template.html` (UI/JS changes, no new scrape needed),
 you just need `python3 4_build_standalone.py` to regenerate `index.html`.
+
+### Seeding a release manually (e.g. after a local scrape)
+
+If you've run the pipeline locally and want to update the live site's data
+without waiting for the scheduled scrape:
+
+```
+gh release create data-$(date -u +%Y-%m-%d) spoonsmap/data/map_data.js \
+  --title "Data scrape data-$(date -u +%Y-%m-%d)" --latest
+```
+
+Then trigger a deploy: `gh workflow run deploy.yml`
