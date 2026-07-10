@@ -47,9 +47,11 @@ Step 4 is NOT used in the Pages deployment. The Pages deploy uses template.html 
 
 ## Dependencies
 
-- Python 3 (standard library only — no pip packages)
-- `curl` (system binary, used by scripts for HTTP)
+- Python 3 (standard library + pip packages below)
+- `aiohttp` + `tenacity` (see `spoonsmap/scripts/requirements.txt`) — used by `2_fetch_menus.py` for async HTTP with retry
 - Frontend: Leaflet 1.9.4 (CDN), OpenStreetMap tiles, api.postcodes.io
+
+Note: Scripts 1, 3, and 4 still use only the Python standard library (+ system `curl` for script 1).
 
 ## Key Design Decisions
 
