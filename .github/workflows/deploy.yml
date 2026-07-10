@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Deploy on push to main (e.g. UI changes to template.html)
+  push:
+    branches: [main]
+  # Auto-deploy after a successful scrape
+  workflow_run:
+    workflows: ["Scrape Fresh Data"]
+    types: [completed]
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+# Only allow one deployment at a time
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Skip if triggered by a failed scrape workflow
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Download map_data.js from latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p spoonsmap/data
+          gh release download --pattern 'map_data.js' --dir spoonsmap/data
+
+      - name: Assemble site directory
+        run: |
+          mkdir -p _site/data
+          cp spoonsmap/template.html _site/index.html
+          cp spoonsmap/data/map_data.js _site/data/map_data.js
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
