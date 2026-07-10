@@ -37,7 +37,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p spoonsmap/data
-          gh release download --pattern 'map_data.js' --dir spoonsmap/data
+          gh release download --pattern 'map_data.js' --dir spoonsmap/data --clobber
 
       - name: Assemble site directory
         run: |
