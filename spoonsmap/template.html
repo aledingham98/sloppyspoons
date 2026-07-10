@@ -7,12 +7,33 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   html, body { height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-  #map { position: absolute; top: 0; bottom: 0; left: 340px; right: 0; }
+  #map { position: absolute; top: 0; bottom: 0; left: 340px; right: 0; transition: left 0.25s ease; }
   #sidebar {
     position: absolute; top: 0; bottom: 0; left: 0; width: 340px; overflow-y: auto;
     background: #1a1a2e; color: #fff; box-sizing: border-box; padding: 14px; z-index: 500;
+    transition: transform 0.25s ease;
   }
-  #sidebar h1 { font-size: 18px; margin: 0 0 12px 0; font-weight: 600; }
+  body.collapsed #sidebar { transform: translateX(-100%); }
+  body.collapsed #map { left: 0; }
+  #sidebarHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  #sidebar h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  #sidebarClose {
+    background: transparent; width: auto; color: #fff; font-size: 20px; line-height: 1;
+    padding: 4px 8px; cursor: pointer; font-weight: normal;
+  }
+  #sidebarClose:hover { background: #33334f; }
+  #sidebarToggle {
+    display: none; position: fixed; top: 10px; left: 10px; z-index: 1001;
+    width: 36px; height: 36px; border-radius: 6px; background: #1a1a2e; color: #fff;
+    border: none; font-size: 18px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    align-items: center; justify-content: center;
+  }
+  body.collapsed #sidebarToggle { display: flex; }
+  @media (max-width: 700px) {
+    #sidebar { position: fixed; width: 85vw; max-width: 340px; box-shadow: 2px 0 12px rgba(0,0,0,0.5); z-index: 1002; }
+    #map { left: 0 !important; }
+    .legend { left: 12px !important; }
+  }
   .panel { background: #24243e; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
   .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #9a9ac0;
     margin: 0 0 8px 0; }
@@ -53,8 +74,12 @@
 </style>
 </head>
 <body>
+<button id="sidebarToggle" aria-label="Open sidebar">☰</button>
 <div id="sidebar">
-  <h1>🍺 SpoonsMap</h1>
+  <div id="sidebarHeader">
+    <h1>🍺 SpoonsMap</h1>
+    <button id="sidebarClose" aria-label="Collapse sidebar">×</button>
+  </div>
 
   <div class="panel">
     <h2>Pick an item</h2>
@@ -140,7 +165,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data/map_data.js"></script>
 <script>
-const map = L.map('map').setView([54.5, -3.5], 6);
+const map = L.map('map', { zoomControl: false }).setView([54.5, -3.5], 6);
+L.control.zoom({ position: 'topright' }).addTo(map);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 19,
@@ -547,6 +573,18 @@ document.getElementById('findRoute').addEventListener('click', async () => {
 document.getElementById('corridor').addEventListener('change', () => {
   if (locationMode === 'route') { routeInfo.corridorMiles = parseFloat(document.getElementById('corridor').value); updateNearResults(); }
 });
+
+document.getElementById('sidebarClose').addEventListener('click', () => {
+  document.body.classList.add('collapsed');
+  setTimeout(() => map.invalidateSize(), 260);
+});
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.body.classList.remove('collapsed');
+  setTimeout(() => map.invalidateSize(), 260);
+});
+if (window.innerWidth <= 700) {
+  document.body.classList.add('collapsed');
+}
 
 fillSelect(bucketSelect, buckets());
 onBucketChange();
