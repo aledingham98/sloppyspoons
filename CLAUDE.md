@@ -14,9 +14,10 @@ This project generates an interactive Leaflet map showing Wetherspoon pub prices
 The site is hosted via GitHub Pages using two separate workflows:
 
 ### `.github/workflows/scrape.yml`
-- **Triggers:** Weekly (Sunday 03:00 UTC) + manual dispatch
+- **Triggers:** Weekly (Sunday 12:00 UTC / 13:00 BST) + manual dispatch
 - **Does:** Runs full scrape pipeline (steps 1-3), then uploads `map_data.js` as a **GitHub Release asset** tagged with the scrape date (e.g. `data-2026-07-10`)
-- **Duration:** ~2 hours (menu scrape is slow)
+- **Duration:** ~7 minutes (async scrape with 10 concurrent workers)
+- **IMPORTANT:** Must run during pub opening hours (ideally lunchtime). The JDW Order & Pay API only returns menus that are currently active — running at night or early morning returns almost no data.
 
 ### `.github/workflows/deploy.yml`
 - **Triggers:** Push to `main` + after scrape completes (`workflow_run`) + manual dispatch
